@@ -1,0 +1,89 @@
+<button type="button" id="btnSelect"   onclick="btnSelect()">Select</button>
+
+<div id="content"></div>
+
+<script>
+
+let hParents = [];
+let hCurrent = undefined;
+let items = [];
+
+async function btnSelect() {
+  hCurrent = await window.showDirectoryPicker();
+  await update();
+}
+
+async function update() {
+  await updateItems();
+  writeItems();
+}
+
+async function updateItems() {
+  items = [];
+  let id = 0;
+
+  const hParent = hParents.length ==0 ? undefined : hParents[hParents.length - 1];
+  items.push({id: 0, name: '..', kind: 'directory', handle: hParent});
+
+  items.push({id: ++id, name: '.', kind: 'directory', handle: hCurrent});
+
+  for await (const hChild of hCurrent.values()) {
+    items.push({id: ++id, name: hChild.name, kind: hChild.kind, handle: hChild});
+  }
+}
+
+function writeItems() {
+  const node = document.getElementById('content');
+
+  removeChildNodes(node);
+
+  const ul = document.createElement('ul');
+  ul.setAttribute('style', 'list-style-type: none;');
+  node.appendChild(ul);
+
+  for (const item of items) {
+    writeItem(ul, item);
+  }
+}
+
+function removeChildNodes(node) {
+  while(node.firstChild){
+    node.removeChild(node.firstChild);
+  }
+}
+
+function writeItem(ul, item) {
+  const li = document.createElement('li');
+  ul.appendChild(li);
+
+  const img = document.createElement('img');
+  img.setAttribute('src', item.kind + '.png');
+  img.setAttribute('onclick', 'updateById(' + item.id + ')');
+  li.appendChild(img);
+
+  const span = document.createElement('span');
+  span.appendChild(document.createTextNode(item.name))
+  li.appendChild(span);
+}
+
+async function updateById(id) {
+  if (id == 0) {
+    if (hParents.length > 0) {
+      hCurrent = hParents.pop();
+    }
+  } else if (id == 1) {
+    // refresh
+  } else if (items[id].kind == 'file') {
+    // refresh
+  } else {
+    hParents.push(hCurrent);
+    hCurrent = items[id].handle;
+  }
+
+  update();
+}
+
+</script>
+
+
+
